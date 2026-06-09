@@ -1,0 +1,23 @@
+{
+  "students": {
+    "1000000": {
+      "id": "1000000",
+      "name": "Dummystudent",
+      "major": "Cs",
+      "enrolled_courses": {},
+      "completed_courses": {},
+      "academic_status": "Good Standing",
+      "semester_gpa_history": []
+    }
+  },
+  "courses": {
+    "COMP101": {
+      "course_code": "COMP101",
+      "title": "Cs Introduction",
+      "credits": 15,
+      "max_capacity": 10,
+      "prerequisites": [],
+      "enrolled_students": []
+    }
+  }
+}

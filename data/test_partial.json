@@ -1,0 +1,34 @@
+{
+  "students": {
+    "1234567": {
+      "id": "1234567",
+      "name": "Alice Johnson",
+      "major": "Computer Science",
+      "enrolled_courses": {},
+      "completed_courses": { "COMP1001": "A" },
+      "academic_status": "Good Standing",
+      "semester_gpa_history": [4.0]
+    },
+    "BADRECORD": {
+      "broken": true
+    }
+  },
+  "courses": {
+    "COMP1001": {
+      "course_code": "COMP1001",
+      "title": "Intro to Computer Science",
+      "credits": 15,
+      "max_capacity": 30,
+      "prerequisites": [],
+      "enrolled_students": ["1234567"]
+    },
+    "MATH2003": {
+      "course_code": "MATH2003",
+      "title": "Calculus I",
+      "credits": 30,
+      "max_capacity": 25,
+      "prerequisites": [],
+      "enrolled_students": []
+    }
+  }
+}

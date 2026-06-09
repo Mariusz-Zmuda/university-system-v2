@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "university-system"
+version = "1.0.0"
+description = "University Academic Management System"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+university = "university.cli:run"
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.9",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/university"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+disable_error_code = ["type-arg"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--tb=short -q"
+
+[tool.coverage.run]
+source = ["src/university"]
+
+[tool.coverage.report]
+show_missing = true

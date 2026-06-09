@@ -1,0 +1,60 @@
+{
+  "students": {
+    "1234567": {
+      "id": "1234567",
+      "name": "Alice Johnson",
+      "major": "Computer Science",
+      "enrolled_courses": {},
+      "completed_courses": {
+        "COMP1001": "A",
+        "MATH2003": "B"
+      },
+      "academic_status": "Good Standing",
+      "semester_gpa_history": [3.78]
+    },
+    "7654321": {
+      "id": "7654321",
+      "name": "Bob Smith",
+      "major": "Mathematics",
+      "enrolled_courses": { "MATH2003": null },
+      "completed_courses": { "COMP1001": "C" },
+      "academic_status": "Good Standing",
+      "semester_gpa_history": [2.0]
+    },
+    "9999999": {
+      "id": "9999999",
+      "name": "Dan Low",
+      "major": "Arts",
+      "enrolled_courses": {},
+      "completed_courses": { "COMP1001": "F" },
+      "academic_status": "Probation",
+      "semester_gpa_history": [0.0]
+    }
+  },
+  "courses": {
+    "COMP1001": {
+      "course_code": "COMP1001",
+      "title": "Intro to Computer Science",
+      "credits": 15,
+      "max_capacity": 30,
+      "prerequisites": [],
+      "enrolled_students": ["1234567", "7654321", "9999999"]
+    },
+    "MATH2003": {
+      "course_code": "MATH2003",
+      "title": "Calculus I",
+      "credits": 30,
+      "max_capacity": 25,
+      "prerequisites": [],
+      "enrolled_students": ["1234567", "7654321"]
+    },
+    "COMP2001": {
+      "course_code": "COMP2001",
+      "title": "Data Structures",
+      "credits": 15,
+      "max_capacity": 25,
+      "prerequisites": ["COMP1001"],
+      "enrolled_students": []
+    }
+  }
+}
