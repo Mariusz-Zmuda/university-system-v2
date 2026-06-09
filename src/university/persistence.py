@@ -53,7 +53,7 @@ def load_data() -> tuple[dict, dict]:
         with DATA_PATH.open("r", encoding="utf-8") as fh:
             payload = json.load(fh)
     except json.JSONDecodeError as exc:
-        print(f"[✗] Data file is corrupt and could not be loaded.")
+        print("[✗] Data file is corrupt and could not be loaded.")
         print(f"    Error: {exc}")
         print("    Starting with an empty system. Your file has NOT been deleted.")
         return {}, {}

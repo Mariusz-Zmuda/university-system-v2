@@ -3,7 +3,7 @@ student.py — Student model.
 
 Responsibilities:
 - Track enrollment state (in-progress and completed courses)
-- Calculate GPA (weighted by UK credit hours, 4.0 scale)
+- Calculate GPA (weighted by credits, 4.0 scale) — both semester and cumulative
 - Track and update academic standing (Good Standing / Probation / Dismissed)
 - Generate official transcripts
 """
@@ -27,10 +27,12 @@ class Student(Person):
 
     enrolled_courses  : {course_code: grade | None} — None means in progress
     completed_courses : {course_code: grade}         — finalised with grade
+    semester_courses  : set of course codes graded in the CURRENT semester,
+                        used to compute semester GPA separately from cumulative
     """
 
-    # UK standard: 120 credits per academic year
-    MAX_CREDITS: int = 120
+    # Spec: maximum 18 credits per semester
+    MAX_CREDITS: int = 18
 
     def __init__(
         self,
@@ -41,6 +43,7 @@ class Student(Person):
         completed_courses: dict[str, str] | None = None,
         academic_status: str = "Good Standing",
         semester_gpa_history: list[float] | None = None,
+        semester_courses: list[str] | None = None,
     ) -> None:
         super().__init__(id, name)
         self.major = major
@@ -48,6 +51,8 @@ class Student(Person):
         self.completed_courses: dict[str, str] = completed_courses or {}
         self.academic_status = academic_status
         self.semester_gpa_history: list[float] = semester_gpa_history or []
+        # Courses graded in the current (in-progress) semester
+        self.semester_courses: list[str] = semester_courses or []
 
     # ------------------------------------------------------------------
     # Enrollment helpers
@@ -63,7 +68,8 @@ class Student(Person):
 
     def assign_grade(self, course_code: str, grade: str) -> None:
         """
-        Finalise a grade — moves course from enrolled to completed.
+        Finalise a grade — moves course from enrolled to completed and
+        records it as part of the current semester.
 
         Raises:
             InvalidGradeError: If grade is not A, B, C, D or F.
@@ -73,26 +79,36 @@ class Student(Person):
             raise InvalidGradeError(grade)
         self.enrolled_courses.pop(course_code, None)
         self.completed_courses[course_code] = grade
+        if course_code not in self.semester_courses:
+            self.semester_courses.append(course_code)
 
     # ------------------------------------------------------------------
     # GPA & credits
     # ------------------------------------------------------------------
 
-    def calculate_gpa(self, course_registry: dict) -> float:
-        """
-        Weighted GPA across all completed courses.
-        Each course's grade points are multiplied by its credit value.
-        """
+    def _weighted_gpa(self, codes: list[str], course_registry: dict) -> float:
+        """Weighted GPA over the given course codes. Helper for the two GPAs."""
         total_points = 0.0
         total_credits = 0
-        for code, grade in self.completed_courses.items():
+        for code in codes:
+            grade = self.completed_courses.get(code)
+            if grade is None:
+                continue
             course = course_registry.get(code)
-            credits = course.credits if course else 15
+            credits = course.credits if course else 3
             total_points += GRADE_POINTS[grade] * credits
             total_credits += credits
         if total_credits == 0:
             return 0.0
         return round(total_points / total_credits, 2)
+
+    def calculate_gpa(self, course_registry: dict) -> float:
+        """Cumulative GPA — weighted across ALL completed courses."""
+        return self._weighted_gpa(list(self.completed_courses.keys()), course_registry)
+
+    def calculate_semester_gpa(self, course_registry: dict) -> float:
+        """Semester GPA — weighted across only the CURRENT semester's courses."""
+        return self._weighted_gpa(self.semester_courses, course_registry)
 
     def current_semester_credits(self, course_registry: dict) -> int:
         """Sum of credits for currently enrolled (in-progress) courses."""
@@ -160,19 +176,14 @@ class Student(Person):
             "-" * 44,
         ]
 
-        sem_points = 0.0
-        sem_credits = 0
-
         for code, grade in self.completed_courses.items():
             course = course_registry.get(code)
-            credits = course.credits if course else 15
+            credits = course.credits if course else 3
             title = (course.title if course else code)[:17]
-            sem_points += GRADE_POINTS[grade] * credits
-            sem_credits += credits
             lines.append(f"{code:<12} {title:<18} {grade:>3} {credits:>3}")
 
         lines.append("-" * 44)
-        sem_gpa = round(sem_points / sem_credits, 2) if sem_credits else 0.0
+        sem_gpa = self.calculate_semester_gpa(course_registry)
         cum_gpa = self.calculate_gpa(course_registry)
         total_cr = self.total_credits_completed(course_registry)
 
@@ -187,7 +198,7 @@ class Student(Person):
             for code in self.enrolled_courses:
                 course = course_registry.get(code)
                 title = (course.title if course else code)[:17]
-                credits = course.credits if course else 15
+                credits = course.credits if course else 3
                 lines.append(f"  {code:<12} {title:<18} {'—':>3} {credits:>3}")
 
         lines.append("=" * 44)
@@ -212,6 +223,7 @@ class Student(Person):
             "completed_courses": self.completed_courses,
             "academic_status": self.academic_status,
             "semester_gpa_history": self.semester_gpa_history,
+            "semester_courses": self.semester_courses,
         }
 
     @classmethod
@@ -224,4 +236,5 @@ class Student(Person):
             completed_courses=data.get("completed_courses", {}),
             academic_status=str(data.get("academic_status", "Good Standing")),
             semester_gpa_history=data.get("semester_gpa_history", []),
+            semester_courses=data.get("semester_courses", []),
         )

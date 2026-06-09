@@ -2,15 +2,15 @@
 test_student.py — Unit tests for the Student model.
 
 Covers:
-- GPA calculation (weighted average by UK credit hours)
+- GPA calculation (weighted average by credits)
 - Academic status transitions (Good Standing / Probation / Dismissed)
 - Credit calculations (semester and completed)
 - Serialization round-trip (to_dict / from_dict)
 
-UK credit values used throughout:
-  COMP1001 = 15 credits
-  MATH2003 = 30 credits
-  ENGL1001 = 15 credits
+Credit values used throughout:
+  COMP1001 = 3 credits
+  MATH2003 = 4 credits
+  ENGL1001 = 3 credits
 
 Fixtures are defined in conftest.py and injected automatically by pytest.
 """
@@ -22,7 +22,7 @@ from university.models.student import Student
 
 
 class TestGPA:
-    """GPA calculation — weighted average by UK credit hours."""
+    """GPA calculation — weighted average by credits."""
 
     def test_no_courses_returns_zero(
         self, student: Student, course_registry: dict[str, Course]
@@ -44,10 +44,10 @@ class TestGPA:
     def test_weighted_average_two_courses(
         self, student: Student, course_registry: dict[str, Course]
     ) -> None:
-        # COMP1001 (15cr, A=4.0) + MATH2003 (30cr, B=3.0)
-        # = (15*4 + 30*3) / 45 = (60+90) / 45 = 150/45 = 3.33
+        # COMP1001 (3cr, A=4.0) + MATH2003 (4cr, B=3.0)
+        # = (3*4 + 4*3) / 7 = (12+12) / 7 = 24/7 = 3.43
         student.completed_courses = {"COMP1001": "A", "MATH2003": "B"}
-        assert student.calculate_gpa(course_registry) == 3.33
+        assert student.calculate_gpa(course_registry) == 3.43
 
     def test_all_f_grades(
         self, student: Student, course_registry: dict[str, Course]
@@ -58,8 +58,8 @@ class TestGPA:
     def test_equal_credits_averages_evenly(
         self, student: Student, course_registry: dict[str, Course]
     ) -> None:
-        # COMP1001 (15cr, C=2.0) + ENGL1001 (15cr, A=4.0)
-        # = (15*2 + 15*4) / 30 = 90/30 = 3.0
+        # COMP1001 (3cr, C=2.0) + ENGL1001 (3cr, A=4.0)
+        # = (3*2 + 3*4) / 6 = 18/6 = 3.0
         student.completed_courses = {"COMP1001": "C", "ENGL1001": "A"}
         assert student.calculate_gpa(course_registry) == 3.0
 
@@ -79,9 +79,7 @@ class TestAcademicStatus:
         student.check_probation(2.0)
         assert student.academic_status == "Good Standing"
 
-    def test_dismissed_after_two_consecutive_below_1_0(
-        self, student: Student
-    ) -> None:
+    def test_dismissed_after_two_consecutive_below_1_0(self, student: Student) -> None:
         student.check_probation(0.8)
         student.check_probation(0.5)
         assert student.academic_status == "Dismissed"
@@ -97,17 +95,13 @@ class TestAcademicStatus:
         student.check_probation(4.0)
         assert student.academic_status == "Dismissed"
 
-    def test_recovery_from_probation_to_good_standing(
-        self, student: Student
-    ) -> None:
+    def test_recovery_from_probation_to_good_standing(self, student: Student) -> None:
         student.check_probation(1.5)
         assert student.academic_status == "Probation"
         student.check_probation(3.5)
         assert student.academic_status == "Good Standing"
 
-    def test_non_consecutive_low_gpas_do_not_dismiss(
-        self, student: Student
-    ) -> None:
+    def test_non_consecutive_low_gpas_do_not_dismiss(self, student: Student) -> None:
         """Low → recovery → low should not trigger dismissal."""
         student.check_probation(0.8)  # low
         student.check_probation(3.0)  # recovery
@@ -116,21 +110,21 @@ class TestAcademicStatus:
 
 
 class TestCredits:
-    """UK credit hour calculations."""
+    """Credit calculations."""
 
     def test_semester_credits_in_progress(
         self, student: Student, course_registry: dict[str, Course]
     ) -> None:
-        # COMP1001=15cr + ENGL1001=15cr = 30
+        # COMP1001=3cr + ENGL1001=3cr = 6
         student.enrolled_courses = {"COMP1001": None, "ENGL1001": None}
-        assert student.current_semester_credits(course_registry) == 30
+        assert student.current_semester_credits(course_registry) == 6
 
     def test_completed_credits(
         self, student: Student, course_registry: dict[str, Course]
     ) -> None:
-        # COMP1001=15cr + MATH2003=30cr = 45
+        # COMP1001=3cr + MATH2003=4cr = 7
         student.completed_courses = {"COMP1001": "A", "MATH2003": "B"}
-        assert student.total_credits_completed(course_registry) == 45
+        assert student.total_credits_completed(course_registry) == 7
 
     def test_no_enrolled_courses_returns_zero(
         self, student: Student, course_registry: dict[str, Course]

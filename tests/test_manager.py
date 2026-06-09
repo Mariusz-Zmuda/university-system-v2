@@ -4,11 +4,11 @@ test_manager.py — Integration tests for UniversityManager.
 Tests cross-model operations: enrollment validation, grade assignment,
 academic standing updates, and report generation.
 
-UK academic conventions throughout:
+Credit conventions throughout (per assignment spec):
   Student IDs : 7 digits       e.g. 1234567
   Course codes: alphanumeric   e.g. COMP1001
-  Credits     : 15 or 30
-  Annual limit: 120 credits
+  Credits     : 3 or 4 per course
+  Semester cap: 18 credits
 
 All fixtures come from conftest.py.
 """
@@ -43,7 +43,7 @@ class TestRegistration:
 
     def test_duplicate_course_raises(self, mgr: UniversityManager) -> None:
         with pytest.raises(DuplicateCourseError):
-            mgr.add_course(Course("COMP1001", "Duplicate", 15, 10))
+            mgr.add_course(Course("COMP1001", "Duplicate", 3, 10))
 
     def test_get_student_not_found_raises(self, mgr: UniversityManager) -> None:
         with pytest.raises(StudentNotFoundError):
@@ -61,9 +61,7 @@ class TestEnrollmentHappyPath:
         mgr.enroll_student("1234567", "COMP1001")
         assert "1234567" in mgr.courses["COMP1001"].enrolled_students
 
-    def test_enroll_after_prerequisite_completed(
-        self, mgr: UniversityManager
-    ) -> None:
+    def test_enroll_after_prerequisite_completed(self, mgr: UniversityManager) -> None:
         mgr.enroll_student("1234567", "COMP1001")
         mgr.assign_grade("1234567", "COMP1001", "B")
         mgr.enroll_student("1234567", "COMP2001")  # prereq now met
@@ -98,14 +96,14 @@ class TestEnrollmentGuards:
             mgr.enroll_student("7654321", "TINY01")
 
     def test_credit_limit_exceeded(self, mgr: UniversityManager) -> None:
-        # UK annual limit = 120 credits
-        # Enroll in 4 x 30-credit modules = 120 credits (at the limit)
-        for i in range(4):
+        # Spec: semester limit = 18 credits
+        # Enroll in 6 x 3-credit modules = 18 credits (at the limit)
+        for i in range(6):
             code = f"FULL{i}001"
-            mgr.add_course(Course(code, f"Full Year Module {i}", 30, 10))
+            mgr.add_course(Course(code, f"Module {i}", 3, 10))
             mgr.enroll_student("1234567", code)
-        # Now at 120 credits — any additional module should raise
-        mgr.add_course(Course("OVER1001", "Over Limit", 15, 10))
+        # Now at 18 credits — any additional module should raise
+        mgr.add_course(Course("OVER1001", "Over Limit", 3, 10))
         with pytest.raises(CreditLimitExceededError):
             mgr.enroll_student("1234567", "OVER1001")
 
@@ -202,13 +200,14 @@ class TestReports:
         bob_pos = rankings.index("Bob Smith")
         assert alice_pos < bob_pos
 
-    def test_deans_list_appears_when_qualified(
-        self, mgr: UniversityManager
-    ) -> None:
+    def test_deans_list_appears_when_qualified(self, mgr: UniversityManager) -> None:
         # Dean's List: GPA >= 3.7 AND >= 12 credits
-        # One 15-credit module with A is enough (15cr >= 12, GPA 4.0 >= 3.7)
-        mgr.enroll_student("1234567", "COMP1001")
-        mgr.assign_grade("1234567", "COMP1001", "A")
+        # Four 3-credit modules with A = 12 credits, GPA 4.0 -> qualifies
+        for i in range(4):
+            code = f"DEAN{i}001"
+            mgr.add_course(Course(code, f"Module {i}", 3, 10))
+            mgr.enroll_student("1234567", code)
+            mgr.assign_grade("1234567", code, "A")
         rankings = mgr.get_rankings()
         assert "DEAN'S LIST" in rankings
 

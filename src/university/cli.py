@@ -6,7 +6,7 @@ All user I/O lives here. Zero business logic.
 Input validation rules (UK academic system):
   Student ID  : exactly 7 digits            e.g. 1234567
   Course code : alphanumeric, auto-uppercased e.g. COMP1001
-  Credits     : 15 or 30 only
+  Credits     : 1-18 per course (semester cap is 18)
   Name        : letters and spaces, title-cased on save
   Grade       : A, B, C, D, or F
 
@@ -33,13 +33,15 @@ logger = logging.getLogger(__name__)
 # Sentinel returned when user presses Enter with nothing — means "cancel"
 _CANCELLED = "__CANCELLED__"
 
-# Valid UK module credit values
-_VALID_CREDITS = {15, 30}
+# Valid per-course credit range (semester cap is 18)
+_MIN_CREDITS = 1
+_MAX_COURSE_CREDITS = 18
 
 
 # ---------------------------------------------------------------------------
 # Low-level prompt helpers
 # ---------------------------------------------------------------------------
+
 
 def _prompt(msg: str) -> str:
     """Raw prompt — strips whitespace, no validation."""
@@ -63,6 +65,7 @@ def _prompt_or_cancel(msg: str) -> str:
 # Each shows format upfront, retries on bad input, cancels on empty Enter.
 # ---------------------------------------------------------------------------
 
+
 def _ask_student_id() -> str:
     """
     Prompt for a UK student ID.
@@ -76,7 +79,9 @@ def _ask_student_id() -> str:
             return _CANCELLED
         if re.fullmatch(r"\d{7}", raw):
             return raw
-        print(f"  [!] '{raw}' is not valid. Must be exactly 7 digits — no letters, spaces or symbols.")
+        print(
+            f"  [!] '{raw}' is not valid. Must be exactly 7 digits — no letters, spaces or symbols."
+        )
         print("      Example: 1234567")
 
 
@@ -95,7 +100,9 @@ def _ask_course_code() -> str:
         normalised = raw.upper()
         if re.fullmatch(r"[A-Z0-9]{2,8}", normalised):
             return normalised
-        print(f"  [!] '{raw}' is not valid. Use 2–8 letters/digits only, no spaces or symbols.")
+        print(
+            f"  [!] '{raw}' is not valid. Use 2–8 letters/digits only, no spaces or symbols."
+        )
         print("      Examples: COMP1001  MATH2003  PHYS301")
 
 
@@ -107,12 +114,14 @@ def _ask_name(label: str = "Full name") -> str:
     """
     print(f"  {label}   — letters and spaces only  (e.g. Alice Johnson)")
     while True:
-        raw = _prompt_or_cancel(f"  Enter name  : ")
+        raw = _prompt_or_cancel("  Enter name  : ")
         if raw == _CANCELLED:
             return _CANCELLED
         if re.fullmatch(r"[A-Za-z\s\-']+", raw) and raw.strip():
             return raw.strip().title()
-        print(f"  [!] '{raw}' contains invalid characters. Letters, spaces, hyphens and apostrophes only.")
+        print(
+            f"  [!] '{raw}' contains invalid characters. Letters, spaces, hyphens and apostrophes only."
+        )
         print("      Examples: Alice Johnson  O'Brien  Smith-Jones")
 
 
@@ -133,19 +142,17 @@ def _ask_major() -> str:
 
 def _ask_credits() -> int | str:
     """
-    Prompt for UK module credits.
-    Only 15 or 30 are accepted.
+    Prompt for course credits (1-18; the semester cap is 18).
     Returns _CANCELLED if user presses Enter with nothing.
     """
-    print("  Credits — UK standard: 15 (one semester) or 30 (full year)")
+    print("  Credits — whole number from 1 to 18  (e.g. 3 or 4)")
     while True:
         raw = _prompt_or_cancel("  Enter credits: ")
         if raw == _CANCELLED:
             return _CANCELLED
-        if raw.isdigit() and int(raw) in _VALID_CREDITS:
+        if raw.isdigit() and _MIN_CREDITS <= int(raw) <= _MAX_COURSE_CREDITS:
             return int(raw)
-        print(f"  [!] '{raw}' is not valid. Only 15 or 30 are accepted in the UK credit system.")
-        print("      15 = one semester module  |  30 = full year module")
+        print(f"  [!] '{raw}' is not valid. Enter a whole number from 1 to 18.")
 
 
 def _ask_capacity() -> int | str:
@@ -204,6 +211,7 @@ _MENU = """
 # ---------------------------------------------------------------------------
 # Handlers — one per menu item
 # ---------------------------------------------------------------------------
+
 
 def _add_student(mgr: UniversityManager) -> None:
     print("\n── Add Student ──────────────────────────────")
@@ -345,6 +353,7 @@ _HANDLERS: dict[str, Callable[[UniversityManager], None]] = {
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def run() -> None:
     """Start the interactive CLI. Called from main.py and the installed script."""

@@ -121,8 +121,7 @@ class UniversityManager:
             raise DuplicateEnrollmentError(student_id, course_code)
 
         missing = [
-            p for p in course.prerequisites
-            if p not in student.completed_courses
+            p for p in course.prerequisites if p not in student.completed_courses
         ]
         if missing:
             raise PrerequisiteNotMetError(course_code, missing)
@@ -132,9 +131,7 @@ class UniversityManager:
 
         current = student.current_semester_credits(self.courses)
         if current + course.credits > Student.MAX_CREDITS:
-            raise CreditLimitExceededError(
-                current, course.credits, Student.MAX_CREDITS
-            )
+            raise CreditLimitExceededError(current, course.credits, Student.MAX_CREDITS)
 
         student.enroll(course_code)
         course.add_student(student_id)
@@ -193,7 +190,11 @@ class UniversityManager:
 
         logger.info(
             "Assigned %s to %s for %s — GPA: %.2f, Status: %s",
-            grade, student_id, course_code, gpa, student.academic_status,
+            grade,
+            student_id,
+            course_code,
+            gpa,
+            student.academic_status,
         )
         print(
             f"[✓] Assigned {grade} to {student.name} for {course_code}. "
@@ -257,9 +258,7 @@ class UniversityManager:
                 f"(GPA >= {DEANS_LIST_GPA}  and  >= {DEANS_LIST_MIN_CREDITS} credits)",
             ]
             for s in deans_list:
-                lines.append(
-                    f"   ★ {s.name} — GPA {s.calculate_gpa(self.courses):.2f}"
-                )
+                lines.append(f"   ★ {s.name} — GPA {s.calculate_gpa(self.courses):.2f}")
         else:
             lines.append("No students currently qualify for the Dean's List.")
 

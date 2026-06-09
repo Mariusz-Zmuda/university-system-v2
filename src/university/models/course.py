@@ -17,7 +17,7 @@ class Course:
     Attributes:
         course_code:       Unique identifier e.g. COMP1001
         title:             Human-readable course name
-        credits:           UK credit value — 15 (semester) or 30 (full year)
+        credits:           Credit value for the course (e.g. 3 or 4)
         max_capacity:      Maximum number of students
         prerequisites:     List of course codes that must be completed first
         enrolled_students: List of student IDs currently enrolled

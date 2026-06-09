@@ -1,16 +1,14 @@
 """
 conftest.py — Shared pytest fixtures.
 
-All test data uses UK academic conventions:
+Test data uses US-style credit conventions (matching the assignment spec):
   Student IDs  : 7 digits           e.g. 1234567
   Course codes : alphanumeric       e.g. COMP1001
-  Credits      : 15 (semester) or 30 (full year)
-  Semester cap : 120 credits per academic year
+  Credits      : 3 or 4 per course
+  Semester cap : 18 credits
 
 Fixtures defined here are automatically available to all test modules
-without any import. This is pytest's native mechanism for sharing
-test setup — the professional alternative to duplicating fixtures
-across test files.
+without any import.
 """
 
 from __future__ import annotations
@@ -26,6 +24,7 @@ from university.models.student import Student
 # Raw model fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def student() -> Student:
     """A blank student with no courses."""
@@ -40,32 +39,32 @@ def student_b() -> Student:
 
 @pytest.fixture
 def course_comp1001() -> Course:
-    """Introductory CS module — 15 credits, no prerequisites, capacity 30."""
-    return Course("COMP1001", "Intro to Computer Science", 15, 30)
+    """Introductory CS module — 3 credits, no prerequisites, capacity 30."""
+    return Course("COMP1001", "Intro to Computer Science", 3, 30)
 
 
 @pytest.fixture
 def course_comp2001() -> Course:
-    """Intermediate CS module — 15 credits, requires COMP1001."""
-    return Course("COMP2001", "Data Structures", 15, 30, prerequisites=["COMP1001"])
+    """Intermediate CS module — 3 credits, requires COMP1001."""
+    return Course("COMP2001", "Data Structures", 3, 30, prerequisites=["COMP1001"])
 
 
 @pytest.fixture
 def course_math2003() -> Course:
-    """Calculus module — 30 credits (full year), no prerequisites."""
-    return Course("MATH2003", "Calculus I", 30, 25)
+    """Calculus module — 4 credits, no prerequisites."""
+    return Course("MATH2003", "Calculus I", 4, 25)
 
 
 @pytest.fixture
 def course_engl1001() -> Course:
-    """English module — 15 credits, no prerequisites."""
-    return Course("ENGL1001", "English Composition", 15, 20)
+    """English module — 3 credits, no prerequisites."""
+    return Course("ENGL1001", "English Composition", 3, 20)
 
 
 @pytest.fixture
 def course_tiny() -> Course:
     """Capacity-1 module used to test CourseFullError."""
-    return Course("TINY01", "Tiny Course", 15, 1)
+    return Course("TINY01", "Tiny Course", 3, 1)
 
 
 @pytest.fixture
@@ -87,6 +86,7 @@ def course_registry(
 # ---------------------------------------------------------------------------
 # Manager fixture — fully wired system
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mgr(
@@ -119,6 +119,7 @@ def mgr(
 # ---------------------------------------------------------------------------
 # Convenience: manager with graded students for course analytics tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mgr_with_grades(mgr: UniversityManager) -> UniversityManager:
